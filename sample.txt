@@ -1,0 +1,27 @@
+# Sample PDF Content
+
+This is a sample PDF for testing the PDF to Audiobook Converter.
+
+## Chapter 1: Introduction
+
+Welcome to this audiobook! This is a demonstration of how the PDF to Audiobook converter works.
+
+The converter will read all the text from your PDF and convert it into spoken audio using text-to-speech technology.
+
+## Chapter 2: Features
+
+The main features include:
+- Automatic text extraction from PDFs
+- High-quality text-to-speech conversion
+- Support for English language
+- Easy command-line interface
+
+## Chapter 3: Getting Started
+
+To use this tool, simply run the command with your PDF file as an argument. The system will process your document and create an audio file that you can listen to anytime.
+
+This is perfect for listening to documents while driving, exercising, or doing other activities.
+
+## Conclusion
+
+Thank you for using the PDF to Audiobook Converter. Enjoy your audiobooks!
