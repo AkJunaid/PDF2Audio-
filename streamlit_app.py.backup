@@ -176,7 +176,7 @@ if uploaded_file is not None:
     specific_pages = None
     
     if total_pages > 0:
-        st.info(f"This PDF has **{total_pages} pages**")
+        st.info(f"📖 This PDF has **{total_pages} pages**")
         
         if page_option == "Page Range":
             col1, col2 = st.columns(2)
@@ -198,10 +198,10 @@ if uploaded_file is not None:
                     step=1,
                     key="end_page_input"
                 )
-            st.success(f"Will convert pages {start_page} to {end_page} ({end_page - start_page + 1} pages)")
+            st.success(f"✓ Will convert pages {start_page} to {end_page} ({end_page - start_page + 1} pages)")
             
             # PDF Preview for page range
-            st.markdown("#### Preview Selected Pages")
+            st.markdown("#### 👁️ Preview Selected Pages")
             show_preview = st.checkbox("Show page previews", value=False, help="Display thumbnail previews of selected pages")
             
             if show_preview:
@@ -236,10 +236,10 @@ if uploaded_file is not None:
                                         st.image(images[idx], caption=f"Page {page_num}", use_container_width=True)
                         
                         if end_page - start_page + 1 > 100:
-                            st.warning(f"Showing first 100 pages only. Your selection includes {end_page - start_page + 1} pages total.")
+                            st.warning(f"⚠️ Showing first 100 pages only. Your selection includes {end_page - start_page + 1} pages total.")
                 
                 except ImportError:
-                    st.error("PDF preview requires additional packages. Install with: `pip install pdf2image pillow`")
+                    st.error("📦 PDF preview requires additional packages. Install with: `pip install pdf2image pillow`")
                     st.info("You can still convert without preview!")
                 except Exception as e:
                     st.error(f"Could not load preview: {str(e)}")
@@ -272,13 +272,13 @@ if uploaded_file is not None:
                     # Validate pages
                     invalid_pages = [p for p in specific_pages if p < 1 or p > total_pages]
                     if invalid_pages:
-                        st.error(f"Invalid page numbers: {invalid_pages}")
+                        st.error(f"❌ Invalid page numbers: {invalid_pages}")
                         specific_pages = None
                     else:
-                        st.success(f"Will convert {len(specific_pages)} pages: {specific_pages[:10]}{'...' if len(specific_pages) > 10 else ''}")
+                        st.success(f"✓ Will convert {len(specific_pages)} pages: {specific_pages[:10]}{'...' if len(specific_pages) > 10 else ''}")
                         
                         # PDF Preview for specific pages
-                        st.markdown("#### Preview Selected Pages")
+                        st.markdown("#### 👁️ Preview Selected Pages")
                         show_preview = st.checkbox("Show page previews", value=False, help="Display thumbnail previews of selected pages", key="specific_preview")
                         
                         if show_preview and specific_pages:
@@ -318,19 +318,19 @@ if uploaded_file is not None:
                                                     st.image(img, caption=f"Page {page_num}", use_container_width=True)
                             
                             except ImportError:
-                                st.error("PDF preview requires additional packages. Install with: `pip install pdf2image pillow`")
+                                st.error("📦 PDF preview requires additional packages. Install with: `pip install pdf2image pillow`")
                                 st.info("You can still convert without preview!")
                             except Exception as e:
                                 st.error(f"Could not load preview: {str(e)}")
                                 st.info("This might happen if poppler is not installed. You can still convert without preview!")
                 
                 except ValueError:
-                    st.error("Invalid format. Use: 1,3,5 or 7-10")
+                    st.error("❌ Invalid format. Use: 1,3,5 or 7-10")
                     specific_pages = None
     
     # Custom output filename
     st.markdown("---")
-    st.markdown("### Output Settings")
+    st.markdown("### 💾 Output Settings")
     
     default_name = Path(uploaded_file.name).stem + "_audiobook"
     custom_filename = st.text_input(
@@ -346,11 +346,11 @@ if uploaded_file is not None:
     import re
     custom_filename = re.sub(r'[<>:"/\\|?*]', '_', custom_filename)
     
-    st.info(f"Output file will be saved as: **{custom_filename}.mp3**")
+    st.info(f"📁 Output file will be saved as: **{custom_filename}.mp3**")
     
     # Convert button
     st.markdown("---")
-    if st.button("Convert to Audiobook", key="convert_btn", type="primary"):
+    if st.button("🎵 Convert to Audiobook", key="convert_btn", type="primary"):
         
         # Create temporary directory for processing
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -405,7 +405,7 @@ if uploaded_file is not None:
                         st.stop()
                 
                 if not text or len(text.strip()) == 0:
-                    st.error("No text content found in the PDF")
+                    st.error("❌ No text content found in the PDF")
                     
                     if language == "bn":
                         st.warning("""
@@ -439,7 +439,7 @@ if uploaded_file is not None:
                         - Test with a different PDF to verify the app works
                         """)
                     
-                    st.info("**Tip**: Try opening the PDF and see if you can select/copy text. If not, it's likely a scanned image.")
+                    st.info("💡 **Tip**: Try opening the PDF and see if you can select/copy text. If not, it's likely a scanned image.")
                     st.stop()
                 
                 progress_bar.progress(30)
@@ -471,9 +471,9 @@ if uploaded_file is not None:
                     # Success message
                     st.markdown('<div class="success-box">', unsafe_allow_html=True)
                     if language == "bn":
-                        st.markdown("### আপনার অডিওবুক তৈরি হয়ে গেছে!")
+                        st.markdown("### ✅ আপনার অডিওবুক তৈরি হয়ে গেছে!")
                     else:
-                        st.markdown("### Your audiobook is ready!")
+                        st.markdown("### ✅ Your audiobook is ready!")
                     st.markdown('</div>', unsafe_allow_html=True)
                     
                     # File info
@@ -487,20 +487,20 @@ if uploaded_file is not None:
                     
                     if page_option != "All Pages":
                         if page_option == "Page Range":
-                            st.info(f"Converted pages {start_page} to {end_page}")
+                            st.info(f"📄 Converted pages {start_page} to {end_page}")
                         else:
-                            st.info(f"Converted {len(specific_pages)} selected pages")
+                            st.info(f"📄 Converted {len(specific_pages)} selected pages")
                     
                     # Read the audio file
                     with open(output_path, 'rb') as audio_file:
                         audio_bytes = audio_file.read()
                     
                     # Audio player
-                    st.markdown("### Preview Audio")
+                    st.markdown("### 🎧 Preview Audio")
                     st.audio(audio_bytes, format=f'audio/{extension[1:]}')
                     
                     # Download button with custom filename
-                    st.markdown("### Download")
+                    st.markdown("### 💾 Download")
                     st.download_button(
                         label=f"⬇️ Download {custom_filename}.mp3",
                         data=audio_bytes,
@@ -528,7 +528,7 @@ else:
     # Instructions when no file is uploaded
     st.markdown('<div class="info-box">', unsafe_allow_html=True)
     st.markdown("""
-    ### How to use:
+    ### 🚀 How to use:
     1. **Upload** a PDF file using the file uploader above
     2. **Select Language** - Choose English or Bengali (বাংলা) from sidebar
     3. **Choose Pages** - Convert all pages, a range, or specific pages
@@ -536,11 +536,11 @@ else:
     5. **Convert** - Click the "Convert to Audiobook" button
     6. **Preview & Download** - Listen and download your audiobook!
     
-    ### New Features:
-    - **Bengali Language Support** - বাংলা PDF থেকে অডিওবুক তৈরি করুন
-    - **Page Selection** - Convert specific pages or ranges (e.g., 1-10, 15, 20-25)
-    - **Custom Naming** - Name your audiobook before downloading
-    - **Preview Audio** - Listen before downloading
+    ### ✨ New Features:
+    - 🌐 **Bengali Language Support** - বাংলা PDF থেকে অডিওবুক তৈরি করুন
+    - 📄 **Page Selection** - Convert specific pages or ranges (e.g., 1-10, 15, 20-25)
+    - 💾 **Custom Naming** - Name your audiobook before downloading
+    - 🎧 **Preview Audio** - Listen before downloading
     
     **Note:** Conversion time depends on:
     - Number of pages selected

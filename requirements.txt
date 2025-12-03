@@ -7,6 +7,13 @@ pydub==0.25.1
 streamlit>=1.28.0
 edge-tts>=6.1.0
 
+# PDF Preview
+pdf2image>=1.16.0
+Pillow>=10.0.0
+
+# OCR for scanned PDFs
+pytesseract>=0.3.10
+
 # For VibeVoice AI TTS (optional, high quality)
 torch>=2.0.0
 transformers>=4.30.0

@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 
 
 class PDFToAudiobook:
-    def __init__(self, pdf_path, output_path=None, engine='gtts', language='en'):
+    def __init__(self, pdf_path, output_path=None, engine='gtts', language='en', voice=None):
         """
         Initialize the PDF to Audiobook converter
         
@@ -28,10 +28,21 @@ class PDFToAudiobook:
             output_path (str): Path for the output audio file (optional)
             engine (str): TTS engine to use ('gtts', 'pyttsx3', or 'espeak')
             language (str): Language code (default: 'en' for English)
+            voice (str): Voice ID for Edge TTS (optional, defaults based on language)
         """
         self.pdf_path = pdf_path
         self.engine = engine
         self.language = language
+        
+        # Set voice based on language if not specified
+        if voice:
+            self.voice = voice
+        else:
+            # Default voices
+            if language == 'bn':
+                self.voice = 'bn-BD-NabanitaNeural'
+            else:
+                self.voice = 'en-US-AriaNeural'
         
         # Set output path
         if output_path:
@@ -100,12 +111,62 @@ class PDFToAudiobook:
         
         return text
     
-    def extract_text_from_pdf(self):
+    def extract_text_with_ocr(self, page_number):
         """
-        Extract text content from the PDF file
+        Extract text from a PDF page using OCR (for scanned PDFs)
+        
+        Args:
+            page_number (int): Page number to extract (1-indexed)
+            
+        Returns:
+            str: Extracted text from OCR
+        """
+        try:
+            from pdf2image import convert_from_path
+            import pytesseract
+            from PIL import Image
+            
+            # Determine OCR language based on self.language
+            if self.language == 'bn':
+                ocr_lang = 'ben+eng'  # Bengali + English
+            else:
+                ocr_lang = 'eng'  # English
+            
+            # Convert specific page to image
+            images = convert_from_path(
+                self.pdf_path,
+                first_page=page_number,
+                last_page=page_number,
+                dpi=300  # Higher DPI for better OCR accuracy
+            )
+            
+            if images:
+                # Perform OCR on the image
+                text = pytesseract.image_to_string(images[0], lang=ocr_lang)
+                return text
+            
+            return ""
+            
+        except ImportError as e:
+            print(f"OCR dependencies not installed: {e}")
+            print("Install with: pip install pytesseract pdf2image")
+            print("Also install tesseract-ocr system package")
+            return ""
+        except Exception as e:
+            print(f"OCR failed for page {page_number}: {str(e)}")
+            return ""
+    
+    def extract_text_from_pdf(self, start_page=None, end_page=None, specific_pages=None):
+        """
+        Extract text content from the PDF file with enhanced Bengali support and page selection
+        
+        Args:
+            start_page (int): Starting page number (1-indexed), default is first page
+            end_page (int): Ending page number (1-indexed), default is last page
+            specific_pages (list): List of specific page numbers to extract (1-indexed)
         
         Returns:
-            str: Extracted text from all pages
+            str: Extracted text from selected pages
         """
         print(f"Opening PDF file: {self.pdf_path}")
         text = ""
@@ -116,13 +177,68 @@ class PDFToAudiobook:
                 total_pages = len(pdf_reader.pages)
                 print(f"Total pages: {total_pages}")
                 
-                for page_num, page in enumerate(pdf_reader.pages, 1):
+                # Determine which pages to process
+                if specific_pages:
+                    # Use specific pages list
+                    pages_to_process = [p - 1 for p in specific_pages if 1 <= p <= total_pages]  # Convert to 0-indexed
+                    print(f"Processing specific pages: {specific_pages}")
+                else:
+                    # Use range
+                    start = (start_page - 1) if start_page else 0  # Convert to 0-indexed
+                    end = end_page if end_page else total_pages
+                    pages_to_process = list(range(start, end))
+                    print(f"Processing pages {start + 1} to {end}")
+                
+                pages_processed = 0
+                for page_index in pages_to_process:
+                    if page_index >= total_pages:
+                        continue
+                        
+                    pages_processed += 1
+                    page_num = page_index + 1  # Display as 1-indexed
                     print(f"Processing page {page_num}/{total_pages}...", end='\r')
-                    page_text = page.extract_text()
+                    
+                    page = pdf_reader.pages[page_index]
+                    
+                    # Try multiple extraction methods
+                    page_text = ""
+                    
+                    # Method 1: Standard extraction
+                    try:
+                        page_text = page.extract_text()
+                    except:
+                        pass
+                    
+                    # Method 2: Try with different extraction mode if method 1 fails
+                    if not page_text or len(page_text.strip()) == 0:
+                        try:
+                            # Extract with layout mode for better Unicode handling
+                            page_text = page.extract_text(extraction_mode="layout")
+                        except:
+                            pass
+                    
+                    # Method 3: OCR if no text found (scanned PDF)
+                    if not page_text or len(page_text.strip()) < 50:
+                        print(f"\nPage {page_num}: Little/no text found, trying OCR...")
+                        ocr_text = self.extract_text_with_ocr(page_num)
+                        if ocr_text and len(ocr_text.strip()) > 0:
+                            page_text = ocr_text
+                            print(f"Page {page_num}: OCR extracted {len(ocr_text)} characters")
+                    
                     if page_text:
+                        # Check if text contains Bengali characters
+                        bengali_chars = sum(1 for c in page_text if '\u0980' <= c <= '\u09FF')
+                        if bengali_chars > 0:
+                            print(f"\nPage {page_num}: Found {bengali_chars} Bengali characters")
+                        
                         text += page_text + "\n"
                 
-                print(f"\nSuccessfully extracted text from {total_pages} pages")
+                print(f"\nSuccessfully extracted text from {pages_processed} pages")
+                
+                # Debug: Show sample of extracted text
+                if text and len(text) > 0:
+                    sample = text[:200].replace('\n', ' ')
+                    print(f"Sample text: {sample}...")
                 
         except FileNotFoundError:
             print(f"Error: PDF file not found at {self.pdf_path}")
@@ -532,7 +648,7 @@ class PDFToAudiobook:
     def text_to_speech_edge(self, text):
         """
         Convert text to speech using Microsoft Edge TTS (edge-tts)
-        High-quality, no rate limits, works offline after first use
+        High-quality, no rate limits, supports multiple languages
         
         Args:
             text (str): Text to convert to speech
@@ -550,18 +666,22 @@ class PDFToAudiobook:
         try:
             # Use asyncio to run edge-tts
             async def generate_audio():
-                # Use English US voice - natural and clear
-                voice = "en-US-AriaNeural"  # Female voice, very natural
-                # Alternative voices:
-                # "en-US-GuyNeural" - Male voice
-                # "en-GB-SoniaNeural" - British female
-                # "en-GB-RyanNeural" - British male
+                # Use the voice specified in __init__
+                # Available voices:
+                # English: "en-US-AriaNeural" (Female), "en-US-GuyNeural" (Male)
+                # Bengali: "bn-BD-NabanitaNeural" (Female), "bn-BD-PradeepNeural" (Male)
                 
-                communicate = edge_tts.Communicate(text, voice)
+                communicate = edge_tts.Communicate(text, self.voice)
                 await communicate.save(self.output_path)
             
             # Run the async function
-            print(f"Using voice: en-US-AriaNeural (Natural Female Voice)")
+            voice_info = {
+                'en-US-AriaNeural': 'English (US) - Aria (Female)',
+                'en-US-GuyNeural': 'English (US) - Guy (Male)',
+                'bn-BD-NabanitaNeural': 'Bengali - Nabanita (Female)',
+                'bn-BD-PradeepNeural': 'Bengali - Pradeep (Male)'
+            }
+            print(f"Using voice: {voice_info.get(self.voice, self.voice)}")
             asyncio.run(generate_audio())
             
             # Check if file was created
@@ -632,23 +752,26 @@ def main():
     Command-line interface for PDF to Audiobook converter
     """
     parser = argparse.ArgumentParser(
-        description='Convert PDF files to audiobooks in English',
+        description='Convert PDF files to audiobooks in multiple languages',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   python pdf_to_audiobook.py input.pdf
   python pdf_to_audiobook.py input.pdf -o output.mp3
-  python pdf_to_audiobook.py input.pdf -e pyttsx3
-  python pdf_to_audiobook.py input.pdf -l en-gb
+  python pdf_to_audiobook.py input.pdf -e edge
+  python pdf_to_audiobook.py input.pdf -l bn --voice bn-BD-NabanitaNeural
+  python pdf_to_audiobook.py bengali.pdf -e edge -l bn
         """
     )
     
     parser.add_argument('pdf_file', help='Path to the PDF file to convert')
     parser.add_argument('-o', '--output', help='Output audio file path (default: <pdf_name>_audiobook.mp3)')
-    parser.add_argument('-e', '--engine', choices=['gtts', 'edge', 'espeak', 'pyttsx3', 'vibevoice'], default='gtts',
-                        help='TTS engine: gtts (best, rate limited), edge (Microsoft, high quality, no limits), espeak (fast, basic), pyttsx3 (unreliable), vibevoice (not working yet)')
+    parser.add_argument('-e', '--engine', choices=['gtts', 'edge', 'espeak', 'pyttsx3', 'vibevoice'], default='edge',
+                        help='TTS engine: edge (Microsoft, recommended), gtts (rate limited), espeak (basic), pyttsx3 (unreliable)')
     parser.add_argument('-l', '--language', default='en',
-                        help='Language code (default: en for English)')
+                        help='Language code: en (English), bn (Bengali)')
+    parser.add_argument('-v', '--voice', default=None,
+                        help='Voice ID for Edge TTS (e.g., en-US-AriaNeural, bn-BD-NabanitaNeural)')
     
     args = parser.parse_args()
     
@@ -657,7 +780,8 @@ Examples:
         pdf_path=args.pdf_file,
         output_path=args.output,
         engine=args.engine,
-        language=args.language
+        language=args.language,
+        voice=args.voice
     )
     
     converter.convert()

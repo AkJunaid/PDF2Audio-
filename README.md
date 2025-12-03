@@ -3,6 +3,8 @@
 
 Convert any PDF document into a high-quality audiobook using Microsoft's Edge TTS technology. Features a beautiful web interface with drag-and-drop functionality.
 
+**NEW:** Bengali language support, page selection, and custom file naming!
+
 ## What Does This Do?
 
 1. **Upload a PDF** - Drag and drop or browse for your PDF file
@@ -15,10 +17,15 @@ Convert any PDF document into a high-quality audiobook using Microsoft's Edge TT
 
 - **Web Interface** - Beautiful Streamlit-based web app with drag & drop
 - **Microsoft Edge TTS** - High-quality neural voices with NO rate limits
+- **Multi-Language Support** - English and Bengali (বাংলা)
+- **Page Selection** - Convert all pages, specific range, or individual pages
+- **PDF Preview** - See thumbnails of selected pages before converting
+- **OCR Support** - Automatically handles scanned PDFs with no selectable text
+- **Custom Naming** - Name your audiobook file before downloading
 - **Real-time Progress** - Watch the conversion progress live
 - **Audio Preview** - Listen before downloading
 - **One-Click Download** - Instantly download your audiobook
-- **Multiple Accents** - English (US, UK, Australia, India)
+- **Natural Voices** - Female neural voices for both languages
 - **Privacy-Focused** - Files processed securely, not stored
 
 ## Quick Start
@@ -35,19 +42,37 @@ streamlit run streamlit_app.py
 
 ### Step 3: Convert Your PDF!
 1. Open your browser (automatically opens to `http://localhost:8501`)
-2. **Drag & drop** your PDF file or click to browse
-3. Click **"Convert to Audiobook"**
-4. **Preview** the audio in your browser
-5. **Download** your audiobook!
+2. **Select Language** - Choose English or Bengali from the sidebar
+3. **Drag & drop** your PDF file or click to browse
+4. **Choose Pages** - Select all pages, a range (e.g., 1-10), or specific pages
+5. **Preview Pages** (optional) - Check "Show page previews" to see thumbnails
+6. **Name Your File** - Enter a custom name for your audiobook
+7. Click **"Convert to Audiobook"**
+8. **Preview Audio** - Listen in your browser
+9. **Download** your audiobook!
 
 ---
 
 ## Requirements
 
+### Core Requirements
 - Python 3.7 or higher
 - Internet connection (for Edge TTS)
 - Modern web browser
 - ~100MB disk space
+
+### Optional (for PDF Preview & OCR)
+- **Poppler utilities** (for page thumbnails)
+  - Arch: `sudo pacman -S poppler`
+  - Ubuntu: `sudo apt-get install poppler-utils`
+  - See [PDF_PREVIEW_SETUP.md](PDF_PREVIEW_SETUP.md) for other OS
+
+- **Tesseract-OCR** (for scanned PDFs)
+  - Arch: `sudo pacman -S tesseract tesseract-data-eng tesseract-data-ben`
+  - Ubuntu: `sudo apt-get install tesseract-ocr tesseract-ocr-eng tesseract-ocr-ben`
+  - See [OCR_SETUP.md](OCR_SETUP.md) for complete guide
+
+**Note:** PDF preview and OCR are optional - the app works without them!
 
 ---
 
@@ -70,14 +95,19 @@ streamlit run streamlit_app.py
 
 ### Option 2: Command Line
 
-**Basic Usage:**
+**Basic Usage (English):**
 ```bash
 python pdf_to_audiobook.py mybook.pdf -e edge
 ```
 
-**Custom Output:**
+**Bengali Audiobook:**
 ```bash
-python pdf_to_audiobook.py mybook.pdf -o audiobook.mp3 -e edge
+python pdf_to_audiobook.py bengali.pdf -e edge -l bn
+```
+
+**Custom Voice:**
+```bash
+python pdf_to_audiobook.py mybook.pdf -e edge -v bn-BD-NabanitaNeural
 ```
 
 **All Options:**
@@ -87,7 +117,8 @@ python pdf_to_audiobook.py <PDF_FILE> [OPTIONS]
 Options:
   -o, --output FILE     Output audio file name
   -e, --engine ENGINE   TTS engine: edge (recommended)
-  -l, --language LANG   Language code (default: en)
+  -l, --language LANG   Language code: en (English), bn (Bengali)
+  -v, --voice VOICE     Voice ID (en-US-AriaNeural, bn-BD-NabanitaNeural)
 ```
 
 ---
@@ -131,6 +162,131 @@ Options:
 └─────────────────┘
 ```
 
+## Supported Languages
+
+| Language | Code | Voice | Gender |
+|----------|------|-------|--------|
+| **English (US)** | `en` | Aria Neural | Female |
+| **Bengali (বাংলা)** | `bn` | Nabanita Neural | Female |
+
+### How to Use Bengali
+
+**Web Interface:**
+1. Open the app: `streamlit run streamlit_app.py`
+2. In the sidebar, select "Bengali (বাংলা)" from language dropdown
+3. Upload your Bengali PDF
+4. Convert and download!
+
+**Command Line:**
+```bash
+python pdf_to_audiobook.py bengali.pdf -e edge -l bn
+```
+
+**For detailed Bengali documentation, see:** [BENGALI_SUPPORT.md](BENGALI_SUPPORT.md)
+
+## OCR for Scanned PDFs
+
+**NEW:** Automatic text extraction from scanned PDFs using OCR!
+
+### What is OCR?
+
+OCR (Optical Character Recognition) extracts text from images and scanned documents. When your PDF has no selectable text (like a scanned book), OCR automatically activates.
+
+### How It Works
+
+1. **Automatic Detection** - App detects pages with little/no text
+2. **OCR Activation** - Converts page to high-quality image (300 DPI)
+3. **Text Extraction** - Uses Tesseract to read the text
+4. **Language Support** - Works for both English and Bengali
+
+### Setup OCR
+
+**Quick Install (Arch Linux):**
+```bash
+sudo pacman -S tesseract tesseract-data-eng tesseract-data-ben
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install tesseract-ocr tesseract-ocr-eng tesseract-ocr-ben
+```
+
+**For complete setup guide:** [OCR_SETUP.md](OCR_SETUP.md)
+
+### Using OCR
+
+No special steps! Just:
+1. Select your language (English or Bengali)
+2. Upload a scanned PDF
+3. OCR runs automatically on pages without selectable text
+4. Watch console for "OCR successful" messages
+
+### Performance Note
+
+OCR takes 2-5 seconds per page (slower than regular extraction). For best results:
+- Use high-quality scans
+- Ensure text is clear and not skewed
+- Works best with printed text (not handwritten)
+
+## Page Selection Feature
+
+Convert only the pages you need! Three options available:
+
+### 1. All Pages (Default)
+Converts the entire PDF from start to finish.
+
+### 2. Page Range
+Convert a continuous range of pages.
+
+**Examples:**
+- Pages 1-10: First 10 pages
+- Pages 5-15: Pages 5 through 15
+- Pages 20-25: Just pages 20 to 25
+
+**Web Interface:**
+1. Select "Page Range" option
+2. Enter start page and end page
+3. Click Convert
+
+**Command Line:**
+```bash
+# Not yet supported in CLI - use web interface
+```
+
+### 3. Specific Pages
+Convert selected individual pages or multiple ranges.
+
+**Examples:**
+- `1,3,5,7` - Pages 1, 3, 5, and 7
+- `1-5,10,15-20` - Pages 1 through 5, page 10, and pages 15 through 20
+- `2,4,6,8,10-15` - Even pages 2-8 plus pages 10-15
+
+**Web Interface:**
+1. Select "Specific Pages" option
+2. Enter page numbers (comma-separated)
+3. Use dash for ranges (e.g., 7-10)
+4. Click Convert
+
+**Use Cases:**
+- Convert only introduction/summary chapters
+- Skip table of contents or index pages
+- Convert specific chapters or sections
+- Focus on pages with important content
+- Faster conversion for large PDFs
+
+## Custom Filename
+
+Name your audiobook before downloading!
+
+**Default:** `original_filename_audiobook.mp3`
+
+**Custom:** Enter any name you want (special characters will be auto-cleaned)
+
+**Examples:**
+- `chapter_1` → `chapter_1.mp3`
+- `bengali_story` → `bengali_story.mp3`
+- `my audiobook 2024` → `my_audiobook_2024.mp3`
+
 ## Why Microsoft Edge TTS?
 
 | Feature | Benefit |
@@ -138,7 +294,7 @@ Options:
 | **High Quality** | Natural-sounding neural voices |
 | **No Rate Limits** | Convert unlimited PDFs |
 | **Fast Processing** | Quick conversion times |
-| **Multiple Accents** | US, UK, Australian, Indian English |
+| **Multi-Language** | English and Bengali support |
 | **Free** | Completely free to use |
 | **Reliable** | Stable and consistent results |
 
@@ -181,7 +337,7 @@ Conversion completed successfully!
 
 ### Problem: "No text extracted from PDF"
 **Cause:** PDF contains images/scanned pages (not text)  
-**Solution:** Use OCR software first to convert images to text, or ensure your PDF has selectable text
+**Solution:** Install Tesseract-OCR for automatic text extraction from scanned PDFs. See [OCR_SETUP.md](OCR_SETUP.md) for details
 
 ### Problem: "Connection error" or "Network error"
 **Cause:** No internet connection  
@@ -214,10 +370,10 @@ pdftoaudiobook/
 ├── streamlit_app.py       # Web interface (MAIN)
 ├── pdf_to_audiobook.py    # Core conversion script
 ├── requirements.txt       # Python dependencies
-├── README.md             # This file
-├── STREAMLIT_GUIDE.md    # Web app documentation
-├── setup.sh              # Quick setup script
-└── examples/             # Usage examples
+├── README.md              # This file
+├── STREAMLIT_GUIDE.md     # Web app documentation
+├── setup.sh               # Quick setup script
+└── examples/              # Usage examples
     └── README.md
 ```
 
@@ -252,36 +408,3 @@ pdftoaudiobook/
 5. **Choose accent** - Select your preferred English accent in settings
 6. **Preview audio** - Listen before downloading to ensure quality
 7. **Large PDFs** - Be patient, conversion takes time proportional to length
-
-## Use Cases
-
-- **Study Materials** - Convert textbooks to audiobooks for studying on-the-go
-- **Research Papers** - Listen to papers while commuting
-- **Documentation** - Convert technical docs to audio format
-- **Accessibility** - Make documents accessible for visually impaired users
-- **Multitasking** - Listen to content while doing other tasks
-
-## Limitations
-
-- Only works with **text-based PDFs** (not scanned images/photos)
-- Requires **internet connection** for Edge TTS
-- Large PDFs may take **several minutes** to process
-- Audio file size proportional to PDF length
-
-## Contributing
-
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Improve documentation
-- Submit pull requests
-
-## License
-
-This project is open source and available under the MIT License.
-
----
-
-**Made with love using Streamlit and Microsoft Edge TTS**
-
-**Start converting your PDFs to audiobooks today!**
